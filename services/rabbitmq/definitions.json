@@ -1,0 +1,109 @@
+{
+  "rabbit_version": "3.12.0",
+  "users": [
+    {
+      "name": "guest",
+      "password_hash": "eol19L6syjdHUPSYZE6+mDDoKp13alcNdzdYTIYBq5A0g2b4",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "sistema.eventos.bus",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "sistema.dlx",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "api-go.procesamiento_inventario",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sistema.dlx",
+        "x-dead-letter-routing-key": "dlq.go"
+      }
+    },
+    {
+      "name": "api-fastapi.notificaciones_pedido",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sistema.dlx",
+        "x-dead-letter-routing-key": "dlq.fastapi"
+      }
+    },
+    {
+      "name": "dlq.general",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "sistema.eventos.bus",
+      "vhost": "/",
+      "destination": "api-go.procesamiento_inventario",
+      "destination_type": "queue",
+      "routing_key": "legacy.pedidos.#",
+      "arguments": {}
+    },
+    {
+      "source": "sistema.eventos.bus",
+      "vhost": "/",
+      "destination": "api-fastapi.notificaciones_pedido",
+      "destination_type": "queue",
+      "routing_key": "legacy.pedidos.#",
+      "arguments": {}
+    },
+    {
+      "source": "sistema.eventos.bus",
+      "vhost": "/",
+      "destination": "api-fastapi.notificaciones_pedido",
+      "destination_type": "queue",
+      "routing_key": "facturacion.facturas.#",
+      "arguments": {}
+    },
+    {
+      "source": "sistema.dlx",
+      "vhost": "/",
+      "destination": "dlq.general",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    }
+  ]
+}
