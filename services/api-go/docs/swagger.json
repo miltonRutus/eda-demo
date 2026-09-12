@@ -1,0 +1,293 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "High-performance microservice in Go for asynchronous inventory reservation and fiscal invoicing in an Event-Driven Architecture.",
+        "title": "Go Inventory \u0026 Billing Service API",
+        "contact": {
+            "name": "Arquitectura EDA Demo"
+        },
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Retorna el catálogo navegable de hipermedios con enlaces a todos los recursos y a la documentación OpenAPI.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discovery"
+                ],
+                "summary": "Catálogo HATEOAS y descubrimiento de la API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.RootDiscoveryResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Comprueba la disponibilidad del servicio con enlaces HATEOAS.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/invoices": {
+            "get": {
+                "description": "Lista todas las facturas procesadas concurrentemente a partir de eventos de compras.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Listar facturas generadas",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.InvoiceListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/invoices/{id}": {
+            "get": {
+                "description": "Obtiene los datos fiscales y enlaces de una factura por su ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Obtener factura por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID de la Factura (ej. FAC-12345)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.InvoiceData"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProblemDetails"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Link"
+                    }
+                },
+                "inventory_ready": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "service": {
+                    "type": "string",
+                    "example": "api-go"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                }
+            }
+        },
+        "models.InvoiceData": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Link"
+                    }
+                },
+                "almacen_asignado": {
+                    "type": "string",
+                    "example": "MAD-01"
+                },
+                "cliente_id": {
+                    "type": "string",
+                    "example": "USR-442"
+                },
+                "estado": {
+                    "type": "string",
+                    "example": "facturado"
+                },
+                "factura_id": {
+                    "type": "string",
+                    "example": "FAC-A1B2C3"
+                },
+                "impuesto": {
+                    "type": "number",
+                    "example": 63
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OrderItem"
+                    }
+                },
+                "pedido_id": {
+                    "type": "string",
+                    "example": "ORD-XYZ123"
+                },
+                "subtotal": {
+                    "type": "number",
+                    "example": 299.98
+                },
+                "total": {
+                    "type": "number",
+                    "example": 362.98
+                }
+            }
+        },
+        "models.InvoiceListResponse": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Link"
+                    }
+                },
+                "count": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "invoices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvoiceData"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "models.Link": {
+            "type": "object",
+            "properties": {
+                "href": {
+                    "type": "string",
+                    "example": "/invoices/FAC-001"
+                },
+                "method": {
+                    "type": "string",
+                    "example": "GET"
+                },
+                "rel": {
+                    "type": "string",
+                    "example": "self"
+                }
+            }
+        },
+        "models.OrderItem": {
+            "type": "object",
+            "properties": {
+                "cantidad": {
+                    "type": "integer"
+                },
+                "precio": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProblemDetails": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Link"
+                    }
+                },
+                "detail": {
+                    "type": "string",
+                    "example": "The requested invoice 'FAC-001' does not exist in the system."
+                },
+                "instance": {
+                    "type": "string",
+                    "example": "/invoices/FAC-001"
+                },
+                "status": {
+                    "type": "integer",
+                    "example": 404
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Invoice Not Found"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "https://api.empresa.com/errors/invoice-not-found"
+                }
+            }
+        },
+        "models.RootDiscoveryResponse": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Link"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "example": "High-performance asynchronous inventory reservation and fiscal invoicing service in Go."
+                },
+                "service": {
+                    "type": "string",
+                    "example": "Go Inventory \u0026 Billing Service"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        }
+    }
+}

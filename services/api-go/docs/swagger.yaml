@@ -1,0 +1,203 @@
+basePath: /
+definitions:
+  models.HealthResponse:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/models.Link'
+        type: object
+      inventory_ready:
+        example: true
+        type: boolean
+      service:
+        example: api-go
+        type: string
+      status:
+        example: ok
+        type: string
+    type: object
+  models.InvoiceData:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/models.Link'
+        type: object
+      almacen_asignado:
+        example: MAD-01
+        type: string
+      cliente_id:
+        example: USR-442
+        type: string
+      estado:
+        example: facturado
+        type: string
+      factura_id:
+        example: FAC-A1B2C3
+        type: string
+      impuesto:
+        example: 63
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.OrderItem'
+        type: array
+      pedido_id:
+        example: ORD-XYZ123
+        type: string
+      subtotal:
+        example: 299.98
+        type: number
+      total:
+        example: 362.98
+        type: number
+    type: object
+  models.InvoiceListResponse:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/models.Link'
+        type: object
+      count:
+        example: 1
+        type: integer
+      invoices:
+        items:
+          $ref: '#/definitions/models.InvoiceData'
+        type: array
+      status:
+        example: success
+        type: string
+    type: object
+  models.Link:
+    properties:
+      href:
+        example: /invoices/FAC-001
+        type: string
+      method:
+        example: GET
+        type: string
+      rel:
+        example: self
+        type: string
+    type: object
+  models.OrderItem:
+    properties:
+      cantidad:
+        type: integer
+      precio:
+        type: number
+      sku:
+        type: string
+    type: object
+  models.ProblemDetails:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/models.Link'
+        type: object
+      detail:
+        example: The requested invoice 'FAC-001' does not exist in the system.
+        type: string
+      instance:
+        example: /invoices/FAC-001
+        type: string
+      status:
+        example: 404
+        type: integer
+      title:
+        example: Invoice Not Found
+        type: string
+      type:
+        example: https://api.empresa.com/errors/invoice-not-found
+        type: string
+    type: object
+  models.RootDiscoveryResponse:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/models.Link'
+        type: object
+      description:
+        example: High-performance asynchronous inventory reservation and fiscal invoicing
+          service in Go.
+        type: string
+      service:
+        example: Go Inventory & Billing Service
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    type: object
+info:
+  contact:
+    name: Arquitectura EDA Demo
+  description: High-performance microservice in Go for asynchronous inventory reservation
+    and fiscal invoicing in an Event-Driven Architecture.
+  title: Go Inventory & Billing Service API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      description: Retorna el catálogo navegable de hipermedios con enlaces a todos
+        los recursos y a la documentación OpenAPI.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RootDiscoveryResponse'
+      summary: Catálogo HATEOAS y descubrimiento de la API
+      tags:
+      - Discovery
+  /health:
+    get:
+      description: Comprueba la disponibilidad del servicio con enlaces HATEOAS.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.HealthResponse'
+      summary: Health check
+      tags:
+      - Health
+  /invoices:
+    get:
+      description: Lista todas las facturas procesadas concurrentemente a partir de
+        eventos de compras.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.InvoiceListResponse'
+      summary: Listar facturas generadas
+      tags:
+      - Invoices
+  /invoices/{id}:
+    get:
+      description: Obtiene los datos fiscales y enlaces de una factura por su ID.
+      parameters:
+      - description: ID de la Factura (ej. FAC-12345)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.InvoiceData'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ProblemDetails'
+      summary: Obtener factura por ID
+      tags:
+      - Invoices
+swagger: "2.0"
