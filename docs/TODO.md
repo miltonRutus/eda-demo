@@ -6,7 +6,7 @@ Este archivo contiene el estado actual de las tareas del proyecto divididas por 
 
 ## 📌 En Progreso
 
-- [ ] Todas las fases principales de la demo EDA han sido completadas con éxito.
+- Ninguna tarea en progreso. Todo el ecosistema de la demo EDA está 100% finalizado y listo para presentación.
 
 ---
 
@@ -18,6 +18,12 @@ Este archivo contiene el estado actual de las tareas del proyecto divididas por 
 ---
 
 ## ✅ Completadas
+
+- [x] **Guía de Demostración Ejecutiva y Técnica ([`docs/DEMO_GUIDE.md`](./DEMO_GUIDE.md)):**
+  - [x] Guión cronológico paso a paso (7 actos) para presentar ante equipo de ingeniería y gerencia.
+  - [x] Storytelling de negocio y técnico explicando desacoplamiento, Auth Offloading y resiliencia.
+  - [x] Demostración en vivo de tolerancia a caídas de RabbitMQ con recuperación sin pérdida.
+  - [x] Cheat sheet de preguntas frecuentes y comandos de testing en contenedores.
 
 - [x] **Fase 5: Frontend Reactivo (Vue.js 3 + Vite + Vuetify):**
   - [x] Multi-Stage `Dockerfile` (targets `dev` con Vite y `prod` con Nginx Alpine estático).

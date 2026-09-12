@@ -73,3 +73,7 @@ Este archivo registra de forma secuencial los cambios, decisiones y avances real
      - **Multi-stage Dockerfile:** `target: dev` (Vite dev server en puerto 5173 con hot-reload) y `target: prod` (Nginx Alpine inmutable).
      - **Testing Automatizado:** 5/5 pruebas unitarias con Vitest y `@vue/test-utils` pasando en contenedor Docker (`docker compose run --rm frontend-vue npm test`).
      - **Verificación End-to-End con Subagente de Navegador:** Navegación en vivo a `http://localhost:5173/`, confirmación de socket conectado a Kong (`Kong Proxy Conectado`), simulación de compra por $299.98 y actualización automática en tiempo real: +29 puntos de fidelidad (96 pts totales, Silver) y nueva factura emitida (`INV-6e7db467` en `WH-SOUTH-02`) con captura de pantalla registrada.
+ 14. **Elaboración de la Guía de Demostración Ejecutiva y Técnica ([`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md)):**
+     - Creación de un guión de presentación en 7 actos diseñado para reuniones de equipo y stakeholders técnicos.
+     - Documentación de pruebas en vivo del ciclo EDA completo, inspección en RabbitMQ Management Console (`15672`) y prueba de resiliencia ante parada intencional del broker (`docker compose stop rabbitmq`), demostrando la continuidad de transacciones en el sistema Legacy.
+     - Actualización de `README.md` con enlaces directos a las 3 instancias de Swagger UI, la guía de demo y comandos de ejecución de las 26 pruebas unitarias contenerizadas.

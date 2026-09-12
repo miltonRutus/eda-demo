@@ -201,6 +201,10 @@ sequenceDiagram
 
 Todo el sistema está 100% dockerizado y se orquesta de forma centralizada desde la raíz mediante Docker Compose, conforme a las reglas descritas en [`AGENTS.md`](./AGENTS.md).
 
+> [!TIP]
+> **¿Vas a presentar esta arquitectura a tu equipo o gerencia?**  
+> Consulta la [**Guía de Demostración Ejecutiva y Técnica (`docs/DEMO_GUIDE.md`)**](./docs/DEMO_GUIDE.md) con un guión cronológico paso a paso, narrativa recomendada y demostración en vivo de resiliencia ante caídas del broker.
+
 ### Prerrequisitos
 * [Docker Desktop](https://www.docker.com/) o Docker Engine con Docker Compose V2 instalado.
 
@@ -220,20 +224,39 @@ docker compose up --build -d
 
 | Servicio | URL / Endpoint | Descripción |
 | :--- | :--- | :--- |
+| **Frontend (Vue.js SPA)** | [http://localhost:5173](http://localhost:5173) | Panel reactivo de usuario y visualización de eventos |
 | **Kong API Gateway (Proxy)** | [http://localhost:8000](http://localhost:8000) | Punto de entrada perimetral unificado (REST y WebSockets) |
-| **Frontend (Vue.js SPA)** | [http://localhost:5173](http://localhost:5173) | Panel reactivo de usuario |
-| **RabbitMQ Management** | [http://localhost:15672](http://localhost:15672) | UI de inspección de exchanges y colas (`guest` / `guest`) |
-| **FastAPI Swagger (vía Kong)**| [http://localhost:8000/api/v1/fastapi/docs](http://localhost:8000/api/v1/fastapi/docs) | Documentación interactiva de la API de orquestación |
-| **FastAPI Swagger (Directo Dev)** | [http://localhost:8002/docs](http://localhost:8002/docs) | Acceso directo de depuración en desarrollo |
+| **RabbitMQ Management Console** | [http://localhost:15672](http://localhost:15672) | UI de inspección de exchanges y colas (`guest` / `guest`) |
+| **API 1: FastAPI Swagger (vía Kong)**| [http://localhost:8000/api/v1/fastapi/docs](http://localhost:8000/api/v1/fastapi/docs) | Documentación interactiva (Fidelidad / WebSockets) |
+| **API 2: Go Swagger (vía Kong)** | [http://localhost:8000/api/v1/go/docs](http://localhost:8000/api/v1/go/docs) | Documentación interactiva (Inventario / Facturación) |
+| **API 3: Legacy Swagger (vía Kong)** | [http://localhost:8000/api/v1/legacy/docs](http://localhost:8000/api/v1/legacy/docs) | Documentación interactiva (Compras Legacy) |
 | **Kong Admin API** | [http://localhost:8001](http://localhost:8001) | Inspección de configuración declarativa del Gateway |
 
-### 4. Monitoreo y Detención
+### 4. Ejecución de Pruebas Unitarias en Contenedores (TDD)
+No requieres instalar Python, Go ni Node.js en tu máquina anfitriona:
+```bash
+# Pruebas unitarias de Legacy (Pytest) -> 4/4 passing
+docker compose run --rm legacy-service pytest
+
+# Pruebas unitarias de Go (Go test) -> 8/8 passing
+docker compose run --rm api-go go test -v ./...
+
+# Pruebas unitarias de FastAPI (Pytest-asyncio) -> 9/9 passing
+docker compose run --rm api-fastapi pytest
+
+# Pruebas unitarias del Frontend (Vitest) -> 5/5 passing
+docker compose run --rm frontend-vue npm test
+```
+
+### 5. Monitoreo y Detención
 ```bash
 # Ver estado de salud de todos los contenedores
 docker compose ps
 
 # Inspeccionar logs en vivo de un servicio específico
 docker compose logs -f api-fastapi
+docker compose logs -f api-go
+docker compose logs -f legacy-service
 docker compose logs -f kong
 docker compose logs -f rabbitmq
 
