@@ -32,6 +32,7 @@ Este archivo contiene el estado actual de las tareas del proyecto divididas por 
   - [x] Conexión en tiempo real vía WebSocket a través de Kong Gateway (`ws://localhost:8000/ws/*`) y cliente REST hacia `/api/v1/*`.
   - [x] Suite de pruebas unitarias (`vitest` y `@vue/test-utils`) pasando al 100% (5/5).
   - [x] Verificación end-to-end con subagente de navegador en `http://localhost:5173/`, validando la reactividad inmediata del pipeline, fidelidad y facturación al enviar pedidos.
+  - [x] Rediseño integral bajo **Material Design 3 Expressive Design** (mallas ambientales de color, tarjetas de 24px de radio con glassmorphism, chips en píldora, tipografía *Plus Jakarta Sans*, steppers táctiles y micro-animaciones interactivas).
 - [x] **Fase 4: API 1 — FastAPI (Orquestación, Fidelidad y Servidor WebSockets):**
   - [x] Multi-Stage `Dockerfile` con targets `dev` y `prod` (Python 3.12-slim, non-root user `appuser`).
   - [x] Servidor WebSocket en `/ws/{client_id}` gestionando conexiones y retransmisión push.

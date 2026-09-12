@@ -77,3 +77,11 @@ Este archivo registra de forma secuencial los cambios, decisiones y avances real
      - Creación de un guión de presentación en 7 actos diseñado para reuniones de equipo y stakeholders técnicos.
      - Documentación de pruebas en vivo del ciclo EDA completo, inspección en RabbitMQ Management Console (`15672`) y prueba de resiliencia ante parada intencional del broker (`docker compose stop rabbitmq`), demostrando la continuidad de transacciones en el sistema Legacy.
      - Actualización de `README.md` con enlaces directos a las 3 instancias de Swagger UI, la guía de demo y comandos de ejecución de las 26 pruebas unitarias contenerizadas.
+ 15. **Evolución Visual a Material Design 3 Expressive Design (UI/UX Premium):**
+     - **Tipografía y Paleta Tonal:** Incorporación de *Plus Jakarta Sans* y paleta de colores MD3 con gradiente de malla ambiental (`#070a13` con mallas radiales índigo/esmeralda/violeta).
+     - **Contenedores y Glassmorphism:** Implementación de `.md3-card-expressive` con radios de curvatura prominentes (`border-radius: 24px`), desenfoque de fondo (`backdrop-filter: blur(16px)`), y micro-elevación interactiva en hover.
+     - **Pipeline Rediseñado:** Visualizador de flujo con tarjetas squircle, badges tonales por servicio y flechas indicadoras de trayectoria.
+     - **Simulador de Compra:** Ficha de producto interactiva, steppers redondeados en píldora (`rounded-pill`) y barra inferior fija con botón CTA vibrante en degradé (`linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)`).
+     - **Tarjeta de Fidelidad:** Banner dinámico según nivel con degradado metálico/dorado (*Gold*, *Silver*, *Standard*), barra de progreso lineal redondeada y escalera visual de perks.
+     - **Consola de Eventos y Facturas:** Vouchers fiscales con indicador de almacén y feed de eventos con filtros por categoría (*Todos*, *Fidelidad*, *Facturas*) y metadatos CloudEvents 1.0.
+     - **Validación Automatizada y Visual:** 5/5 pruebas en Vitest aprobadas y verificación en vivo con subagente de navegador confirmando la reactividad y legibilidad óptima.

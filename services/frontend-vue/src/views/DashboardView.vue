@@ -130,11 +130,26 @@ onUnmounted(() => {
       </v-col>
     </v-row>
 
-    <!-- Feedback Snackbar -->
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000" location="bottom right">
-      {{ snackbar.text }}
+    <!-- Feedback Snackbar (MD3 Expressive Pill) -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      timeout="4000"
+      location="bottom right"
+      rounded="pill"
+      elevation="6"
+      class="mb-4 mr-4"
+    >
+      <div class="d-flex align-center">
+        <v-icon start size="18" class="mr-2">
+          {{ snackbar.color === 'success' ? 'mdi-check-circle-outline' : 'mdi-alert-circle-outline' }}
+        </v-icon>
+        <span class="font-weight-medium text-body-2">{{ snackbar.text }}</span>
+      </div>
       <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false">Cerrar</v-btn>
+        <v-btn variant="text" size="small" class="font-weight-bold" @click="snackbar.show = false">
+          Cerrar
+        </v-btn>
       </template>
     </v-snackbar>
   </v-container>
