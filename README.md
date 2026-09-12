@@ -267,3 +267,108 @@ docker compose down
 # Reset completo (incluyendo colas persistentes de RabbitMQ)
 docker compose down -v
 ```
+
+---
+
+## 🌐 Infraestructura y Redes en un Vistazo
+
+Todo el ecosistema opera de manera **100% contenerizada**, gobernado por una red puente dedicada (`eda-network`) que aísla la comunicación entre contenedores y restringe la exposición hacia el host únicamente a los puertos perimetrales y de desarrollo.
+
+### 1. Diagrama de Topología de Red e Infraestructura
+
+```mermaid
+flowchart TB
+    subgraph HOST["💻 Máquina Anfitriona (Host)"]
+        BROWSER["🌐 Navegador Web / Postman\n(Dashboard, REST, WebSockets)"]
+        DEV["👨‍💻 Terminal de Desarrollo\n(pytest, go test, vitest, logs)"]
+    end
+
+    subgraph PORTS_EXPOSED["Puertos Mapeados hacia el Host"]
+        P_KONG["8000:8000 ➔ Kong Proxy (Ingress Único)"]
+        P_VUE["5173:5173 ➔ Frontend Vite (Dev Server)"]
+        P_RABBIT_UI["15672:15672 ➔ RabbitMQ Management UI"]
+        P_RABBIT_AMQP["5672:5672 ➔ RabbitMQ AMQP Broker"]
+        P_ADMIN["127.0.0.1:8001 ➔ Kong Admin API (Local)"]
+        P_DIRECT_APIS["8002, 8080, 8003 ➔ Acceso Directo Secundario Dev"]
+    end
+
+    subgraph DOCKER_ENGINE["🐳 Docker Engine — Red Interna Puente: eda-network (172.x)"]
+        
+        subgraph GATEWAY_TIER["Capa de Entrada y Seguridad Perimetral"]
+            KONG_C["eda-kong (kong:3.6-alpine)\n• DB-less (kong.yml)\n• Plugins: CORS, RateLimit, Corr-ID\n• IP DNS: kong:8000"]
+        end
+
+        subgraph FRONT_TIER["Capa de Presentación Reactiva"]
+            VUE_C["eda-frontend-vue\n• Node 20 / Nginx Alpine\n• Multi-stage (dev/prod)\n• IP DNS: frontend-vue:5173"]
+        end
+
+        subgraph APIS_TIER["Capa de Microservicios (Cero Auth Local)"]
+            LEGACY_C["eda-legacy-service\n• Python 3.12-slim (appuser)\n• Producer Fire & Forget\n• IP DNS: legacy-service:8000"]
+            
+            GO_C["eda-api-go\n• Golang 1.23 / Alpine (appuser)\n• Goroutines & IVA 19%\n• Swaggo OpenAPI Auto\n• IP DNS: api-go:8080"]
+            
+            FASTAPI_C["eda-api-fastapi\n• Python 3.12-slim (appuser)\n• WebSocket Manager\n• aio-pika Consumer\n• IP DNS: api-fastapi:8000"]
+        end
+
+        subgraph BROKER_TIER["Capa de Mensajería Asíncrona (AMQP)"]
+            RABBIT_C[("eda-rabbitmq\n(rabbitmq:3-management-alpine)\n• Exchange: sistema.eventos.bus (topic)\n• DLX: sistema.dlx\n• IP DNS: rabbitmq:5672")]
+            RABBIT_VOL[("💾 Volumen Persistente:\neda_rabbitmq_data")]
+            RABBIT_C --- RABBIT_VOL
+        end
+    end
+
+    %% Conexiones desde el Host
+    BROWSER -->|"HTTP :5173"| P_VUE --> VUE_C
+    BROWSER -->|"HTTP/WS :8000"| P_KONG --> KONG_C
+    BROWSER -->|"HTTP :15672"| P_RABBIT_UI --> RABBIT_C
+    DEV -->|"AMQP :5672"| P_RABBIT_AMQP --> RABBIT_C
+
+    %% Enrutamiento de Kong hacia Upstreams
+    KONG_C -->|"Proxy HTTP: /api/v1/legacy/*"| LEGACY_C
+    KONG_C -->|"Proxy HTTP: /api/v1/go/*"| GO_C
+    KONG_C -->|"Proxy HTTP: /api/v1/fastapi/*"| FASTAPI_C
+    KONG_C <==>|"Proxy WebSocket Bidireccional: /ws/*"| FASTAPI_C
+
+    %% Eventos AMQP en la Red Interna
+    LEGACY_C -->|"Publica 'legacy.pedidos.creado' (AMQP:5672)"| RABBIT_C
+    RABBIT_C -->|"Consume orden (AMQP:5672)"| GO_C
+    RABBIT_C -->|"Consume orden (AMQP:5672)"| FASTAPI_C
+    GO_C -->|"Publica 'facturacion.facturas.generada' (AMQP:5672)"| RABBIT_C
+    RABBIT_C -->|"Consume factura (AMQP:5672)"| FASTAPI_C
+```
+
+---
+
+### 2. Matriz Completa de Contenedores y Servicios
+
+| Servicio | Contenedor | Imagen Base | Target Dockerfile | Usuario | Puerto Host | Puerto Red Docker | DNS Interno | Rol Arquitectónico |
+|---|---|---|---|---|---|---|---|---|
+| **kong** | `eda-kong` | `kong:3.6` | Oficial | `kong` | `8000`, `127.0.0.1:8001` | `8000`, `8001` | `kong` | Ingress Perimetral, Auth Offloading, CORS y WebSocket Proxy |
+| **rabbitmq** | `eda-rabbitmq` | `rabbitmq:3-management-alpine` | Oficial | `rabbitmq` | `5672`, `15672` | `5672`, `15672` | `rabbitmq` | Message Broker AMQP, Topic Exchange y Dead Letter Exchange |
+| **legacy-service** | `eda-legacy-service` | `python:3.12-slim` | Multi-stage (`dev`/`prod`) | `appuser` (no-root) | `8003` (dev) | `8000` | `legacy-service` | Monolito de pedidos, emisor Fire & Forget CloudEvents 1.0 |
+| **api-go** | `eda-api-go` | `golang:1.23-alpine` / `alpine:3.20` | Multi-stage (`dev`/`prod`) | `appuser` (no-root) | `8080` (dev) | `8080` | `api-go` | Consumidor AMQP de alto rendimiento, reserva de stock y cálculo fiscal (IVA 19%) |
+| **api-fastapi** | `eda-api-fastapi` | `python:3.12-slim` | Multi-stage (`dev`/`prod`) | `appuser` (no-root) | `8002` (dev) | `8000` | `api-fastapi` | Orquestador de fidelidad, consumidor AMQP asíncrono y servidor WebSockets |
+| **frontend-vue** | `eda-frontend-vue` | `node:20-alpine` / `nginx:alpine` | Multi-stage (`dev`/`prod`) | `node` / `nginx` | `5173` | `5173` | `frontend-vue` | SPA reactiva Vue 3 + Pinia + Vuetify (MD3 Expressive Design) |
+
+---
+
+### 3. Topología de RabbitMQ (AMQP)
+
+| Elemento AMQP | Nombre | Tipo | Durabilidad | Enrutamiento / Binding Key | Propósito |
+|---|---|---|---|---|---|
+| **Exchange Principal** | `sistema.eventos.bus` | `topic` | `durable = true` | `*.*.*` | Bus de eventos desacoplado para todo el ecosistema |
+| **Exchange DLX** | `sistema.dlx` | `topic` | `durable = true` | `#` | Recibe mensajes fallidos no recuperables (Dead Letter) |
+| **Cola Go** | `api-go.procesamiento_inventario` | `quorum/standard` | `durable = true` | `legacy.pedidos.creado` | Reserva de inventario y facturación concurrente |
+| **Cola FastAPI** | `api-fastapi.notificaciones_pedido` | `quorum/standard` | `durable = true` | `legacy.pedidos.creado`, `facturacion.facturas.generada` | Acumulación de puntos de fidelidad y push WebSocket |
+| **Cola de Fallos (DLQ)**| `dlq.general` | `standard` | `durable = true` | `#` | Almacenamiento seguro de mensajes no procesables para auditoría |
+
+---
+
+### 4. Pipeline de Ingress y Rutas en Kong Gateway (DB-less)
+
+| Ruta Pública (Host :8000) | Upstream Interno | Strip Path | Timeout WS / HTTP | Plugins Perimetrales Activos |
+|---|---|---|---|---|
+| `/api/v1/legacy/*` | `http://legacy-service:8000` | `true` | 60 s | `cors`, `correlation-id`, `rate-limiting` (200 req/min) |
+| `/api/v1/go/*` | `http://api-go:8080` | `true` | 60 s | `cors`, `correlation-id`, `rate-limiting` (200 req/min) |
+| `/api/v1/fastapi/*` | `http://api-fastapi:8000` | `true` | 60 s | `cors`, `correlation-id`, `rate-limiting` (200 req/min) |
+| `/ws/*` | `http://api-fastapi:8000` | `false` | 3600 s (1 hora) | `cors`, `correlation-id`, `Upgrade: websocket` |
