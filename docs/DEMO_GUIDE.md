@@ -80,14 +80,15 @@ docker compose ps
 
 ---
 
-### Acto 3: La Demostración en Vivo del Ciclo EDA Completo (5 minutos)
+### Acto 3: La Demostración en Vivo del Ciclo EDA Completo (7 minutos)
 
 > **Narrativa para el equipo:**
-> *"Vamos a realizar una compra simulando a un usuario en el portal web. Observen cómo el sistema Legacy responde en milisegundos liberando al usuario, mientras los servicios de Go y FastAPI procesan la lógica pesada de forma asíncrona y simultánea."*
+> *"Vamos a demostrar el ciclo completo bajo dos escenarios: primero, un usuario interactuando con el portal web; segundo, un sistema externo (B2B o ERP) enviando pedidos vía API REST a través de Kong Gateway. Observen cómo el sistema responde en milisegundos y los microservicios procesan la lógica asíncrona concurrentemente."*
 
-1. En la tarjeta **"Simulación de Compra (Legacy Service)"**:
+#### 3.1. Escenario A: Compra desde el Dashboard Web (Vue 3)
+1. En la tarjeta **"Simulador de Compra (Legacy Service)"**:
    - Selecciona productos (por ejemplo, **2 Teclados Mecánicos RGB** = $299.98).
-   - Haz clic en el botón **"Procesar Compra Asíncrona (Fire & Forget)"**.
+   - Haz clic en el botón **"Disparar Compra a Monolito"**.
 2. **Observa la reacción inmediata en pantalla (sin recargar):**
    - El botón responde en **~20 ms** confirmando el pedido.
    - **Tarjeta de Fidelidad (FastAPI):**
@@ -101,6 +102,37 @@ docker compose ps
        1. `legacy.pedidos.creado` ➔ Notificación de compra y actualización de puntos.
        2. `facturacion.facturas.generada` ➔ Factura fiscal emitida por Go.
    - **Diagrama de Arquitectura:** Los nodos de Legacy, RabbitMQ, Go y FastAPI emiten pulsos luminosos indicando el flujo del mensaje.
+
+#### 3.2. Escenario B: Simulación de API Externa (Postman / cURL / ERP Partner)
+> **Narrativa para el equipo:**
+> *"¿Qué sucede si un partner B2B, un sistema de facturación externo o una app móvil crea una orden vía API REST sin interactuar con nuestra interfaz web? Kong Gateway recibe la petición perimetral, la enruta al Monolito Legacy, y nuestro Frontend en el navegador reacciona automáticamente en tiempo real gracias a los WebSockets."*
+
+1. **Uso de la Colección Oficial de Postman:**
+   - Importa en Postman el archivo [`docs/eda-demo.postman_collection.json`](./eda-demo.postman_collection.json) (también en la raíz como [`eda-demo.postman_collection.json`](../eda-demo.postman_collection.json)).
+   - Contiene variables preconfiguradas: `base_url = http://localhost:8000` y `client_id = cli-442`.
+   - Abre la carpeta **"1. Simulación Externa (B2B / ERP / Partner)"** y ejecuta:
+     - **"Crear Compra Externa (B2B Standard)":** Simula una orden de $249.99 con cabeceras `X-Correlation-ID` y `X-User-Id`.
+     - **"Crear Compra de Alto Valor (Trigger Nivel Gold)":** Simula una orden por $689.95 que acumula +68 puntos, disparando el ascenso inmediato a Nivel Gold.
+
+2. **O ejecución directa vía cURL desde la terminal:**
+   ```bash
+   curl -i -X POST http://localhost:8000/api/v1/legacy/orders \
+     -H "Content-Type: application/json" \
+     -H "X-Correlation-ID: b2b-external-partner-9988" \
+     -H "X-User-Id: external-erp-system" \
+     -d '{
+       "cliente_id": "cli-442",
+       "items": [
+         { "sku": "PROD-A", "cantidad": 1, "precio": 149.99 },
+         { "sku": "PROD-B", "cantidad": 2, "precio": 50.00 }
+       ]
+     }'
+   ```
+
+3. **Puntos a destacar al equipo durante la llamada:**
+   - **Respuesta síncrona en 15 ms:** La respuesta HTTP retorna `200 OK` con metadatos HATEOAS (`_links`) y `event_published: true`.
+   - **Efecto en Vivo en la SPA abierta:** Sin tocar el teclado ni el ratón en la ventana del navegador (`http://localhost:5173`), el Frontend actualiza los puntos de fidelidad, añade la factura generada por Go y muestra los CloudEvents en la consola con el `correlation_id` externo.
+   - **Trazabilidad Distribuida:** En la consola de eventos, señala cómo el `corr: b2b-external-partner-9988` viajó desde la petición externa por Kong, RabbitMQ, Go y FastAPI hasta llegar al WebSocket del navegador.
 
 ---
 

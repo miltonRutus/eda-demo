@@ -230,6 +230,7 @@ docker compose up --build -d
 | **API 1: FastAPI Swagger (vía Kong)**| [http://localhost:8000/api/v1/fastapi/docs](http://localhost:8000/api/v1/fastapi/docs) | Documentación interactiva (Fidelidad / WebSockets) |
 | **API 2: Go Swagger (vía Kong)** | [http://localhost:8000/api/v1/go/docs](http://localhost:8000/api/v1/go/docs) | Documentación interactiva (Inventario / Facturación) |
 | **API 3: Legacy Swagger (vía Kong)** | [http://localhost:8000/api/v1/legacy/docs](http://localhost:8000/api/v1/legacy/docs) | Documentación interactiva (Compras Legacy) |
+| **Colección Postman** | [`eda-demo.postman_collection.json`](./eda-demo.postman_collection.json) | Peticiones preconfiguradas para simular APIs externas B2B |
 | **Kong Admin API** | [http://localhost:8001](http://localhost:8001) | Inspección de configuración declarativa del Gateway |
 
 ### 4. Ejecución de Pruebas Unitarias en Contenedores (TDD)

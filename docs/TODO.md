@@ -24,6 +24,7 @@ Este archivo contiene el estado actual de las tareas del proyecto divididas por 
   - [x] Storytelling de negocio y técnico explicando desacoplamiento, Auth Offloading y resiliencia.
   - [x] Demostración en vivo de tolerancia a caídas de RabbitMQ con recuperación sin pérdida.
   - [x] Cheat sheet de preguntas frecuentes y comandos de testing en contenedores.
+  - [x] Colección oficial de Postman ([`eda-demo.postman_collection.json`](./eda-demo.postman_collection.json)) y ejemplos cURL para simular peticiones de APIs externas (B2B/ERP) y observar la reacción reactiva del Frontend en tiempo real.
 
 - [x] **Fase 5: Frontend Reactivo (Vue.js 3 + Vite + Vuetify):**
   - [x] Multi-Stage `Dockerfile` (targets `dev` con Vite y `prod` con Nginx Alpine estático).

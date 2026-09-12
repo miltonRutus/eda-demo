@@ -85,3 +85,7 @@ Este archivo registra de forma secuencial los cambios, decisiones y avances real
      - **Tarjeta de Fidelidad:** Banner dinámico según nivel con degradado metálico/dorado (*Gold*, *Silver*, *Standard*), barra de progreso lineal redondeada y escalera visual de perks.
      - **Consola de Eventos y Facturas:** Vouchers fiscales con indicador de almacén y feed de eventos con filtros por categoría (*Todos*, *Fidelidad*, *Facturas*) y metadatos CloudEvents 1.0.
      - **Validación Automatizada y Visual:** 5/5 pruebas en Vitest aprobadas y verificación en vivo con subagente de navegador confirmando la reactividad y legibilidad óptima.
+ 16. **Integración de Colección Oficial de Postman y Simulación de API Externa:**
+     - **Archivo Postman v2.1:** Creación de [`docs/eda-demo.postman_collection.json`](./docs/eda-demo.postman_collection.json) y copia accesible en la raíz [`eda-demo.postman_collection.json`](./eda-demo.postman_collection.json) con peticiones parametrizadas (`{{base_url}}`, `{{client_id}}`), headers distribuidos (`X-Correlation-ID`, `X-User-Id`), scripts de prueba automatizados y carpetas organizadas por dominios.
+     - **Escenario B en Guía de Demo:** Incorporación en [`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md) de la prueba en vivo para disparar compras desde Postman o cURL simulando un sistema externo (B2B/ERP) y observar el efecto inmediato en la pantalla web del Frontend vía WebSockets.
+     - **Actualización de README.md:** Enlace directo hacia la colección de Postman en la tabla de accesos del ecosistema.

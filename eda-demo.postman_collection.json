@@ -1,0 +1,325 @@
+{
+  "info": {
+    "_postman_id": "8a32d164-9b57-418c-9bfe-eda-demo-collection",
+    "name": "EDA Demo — Event-Driven Architecture (Kong Gateway)",
+    "description": "Colección de Postman para simular peticiones de sistemas externos (B2B, ERPs, Apps móviles) hacia el ecosistema EDA protegido por Kong API Gateway.\n\nAl disparar compras desde aquí, observa cómo el Frontend en `http://localhost:5173/` reacciona en tiempo real vía WebSockets sin interacción del usuario.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "cli-442",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Simulación Externa (B2B / ERP / Partner)",
+      "description": "Endpoints para simular transacciones originadas desde sistemas externos o aplicaciones de terceros que ingresan a través de Kong Gateway.",
+      "item": [
+        {
+          "name": "Crear Compra Externa (B2B Standard)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Event was published to RabbitMQ\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.event_published).to.eql(true);",
+                  "    pm.expect(jsonData).to.have.property('pedido_id');",
+                  "    pm.collectionVariables.set(\"last_pedido_id\", jsonData.pedido_id);",
+                  "});",
+                  "pm.test(\"Response contains HATEOAS _links\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('_links');",
+                  "    pm.expect(jsonData._links).to.have.property('docs');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "b2b-ext-{{$guid}}",
+                "description": "Identificador de correlación para trazabilidad distribuida"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "external-partner-erp",
+                "description": "Simulación de identidad de sistema externo"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": \"{{client_id}}\",\n  \"items\": [\n    {\n      \"sku\": \"PROD-A\",\n      \"cantidad\": 1,\n      \"precio\": 149.99\n    },\n    {\n      \"sku\": \"PROD-B\",\n      \"cantidad\": 2,\n      \"precio\": 50.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/legacy/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "legacy",
+                "orders"
+              ]
+            },
+            "description": "Simula una orden de compra enviada por una API externa hacia el Monolito Legacy a través de Kong Gateway. El pedido responde en milisegundos en modo Fire & Forget y dispara el flujo asíncrono en RabbitMQ (Go Billing Engine + FastAPI Loyalty & WebSockets)."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Compra de Alto Valor (Trigger Nivel Gold)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"High value order confirmed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.total).to.be.above(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "b2b-vip-{{$guid}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "vip-partner-portal"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": \"{{client_id}}\",\n  \"items\": [\n    {\n      \"sku\": \"PROD-C\",\n      \"cantidad\": 3,\n      \"precio\": 89.99\n    },\n    {\n      \"sku\": \"PROD-A\",\n      \"cantidad\": 2,\n      \"precio\": 149.99\n    },\n    {\n      \"sku\": \"PROD-D\",\n      \"cantidad\": 1,\n      \"precio\": 120.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/legacy/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "legacy",
+                "orders"
+              ]
+            },
+            "description": "Envía una orden de compra masiva por $689.95. Al procesarse asíncronamente, otorga +68 puntos de fidelidad impulsando al cliente hacia la categoría Nivel Gold."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Inspección de Microservicios (REST HATEOAS)",
+      "description": "Peticiones de lectura para consultar el estado interno de los microservicios una vez procesados los eventos.",
+      "item": [
+        {
+          "name": "Consultar Puntos de Fidelidad (FastAPI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fastapi/customers/{{client_id}}/points",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fastapi",
+                "customers",
+                "{{client_id}}",
+                "points"
+              ]
+            },
+            "description": "Consulta el saldo acumulado de puntos y la categoría actual (Standard, Silver, Gold) del cliente en el microservicio FastAPI."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Facturas Emitidas (Golang)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/go/invoices",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "go",
+                "invoices"
+              ]
+            },
+            "description": "Obtiene la lista de todas las facturas fiscales generadas de manera concurrente por el motor en Go tras reservar inventario."
+          },
+          "response": []
+        },
+        {
+          "name": "Catálogo Raíz HATEOAS — Legacy Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/legacy/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "legacy",
+                ""
+              ]
+            },
+            "description": "Índice navegable HATEOAS del microservicio Legacy."
+          },
+          "response": []
+        },
+        {
+          "name": "Catálogo Raíz HATEOAS — Go Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/go/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "go",
+                ""
+              ]
+            },
+            "description": "Índice navegable HATEOAS del microservicio Go."
+          },
+          "response": []
+        },
+        {
+          "name": "Catálogo Raíz HATEOAS — FastAPI Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fastapi/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fastapi",
+                ""
+              ]
+            },
+            "description": "Índice navegable HATEOAS del microservicio FastAPI."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Health Checks y Observabilidad",
+      "item": [
+        {
+          "name": "Health Check — Legacy Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/legacy/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "legacy",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check — Go Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/go/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "go",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check — FastAPI Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fastapi/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fastapi",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
