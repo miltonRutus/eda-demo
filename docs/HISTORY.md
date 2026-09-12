@@ -97,3 +97,7 @@ Este archivo registra de forma secuencial los cambios, decisiones y avances real
      - **Resolución de Corte de Filas (Clipping):** Se eliminó la altura rígida `h-100` que forzaba el colapso vertical en la columna central y se amplió el contenedor de historial a `max-height: 180px` con padding lateral y altura mínima por fila (`min-height: 42px`), eliminando el corte horizontal de elementos.
      - **Corrección de Puntos Nulos (`+ pts`):** Se corrigió la propiedad de acceso a `puntos_obtenidos ?? puntos_ganados ?? 0`, asegurando que las cifras (+24 pts, +29 pts, etc.) se rendericen siempre visibles.
      - **Timestamp y Tipografía:** Inclusión de marcas de tiempo formateadas en `JetBrains Mono` y comprobación visual al 100% mediante navegador headless.
+ 19. **Configuración de Remote Origin y Publicación en GitHub:**
+     - Se actualizó la URL del remoto `origin` a `https://github.com/miltonRutus/eda-demo.git`.
+     - Se publicó la rama `main` completa con todo el historial, infraestructura, microservicios, tests y documentación.
+
