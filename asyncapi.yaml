@@ -1,0 +1,182 @@
+asyncapi: '2.6.0'
+info:
+  title: E-Commerce Event-Driven Architecture (EDA) Bus
+  version: '1.0.0'
+  description: |
+    Especificación formal de la topología asíncrona de eventos sobre RabbitMQ Topic Exchange (sistema.eventos.bus).
+    Cumple con el estándar CloudEvents 1.0 y patrón Envelope estipulado en AGENTS.md.
+
+servers:
+  production:
+    url: amqp://rabbitmq:5672/
+    protocol: amqp
+    description: Broker RabbitMQ en red eda-network
+
+defaultContentType: application/json
+
+channels:
+  legacy.pedidos.creado:
+    description: Evento emitido por el sistema Legacy al confirmarse una orden de compra (Fire & Forget).
+    publish:
+      summary: Publicado por legacy-service
+      message:
+        $ref: '#/components/messages/OrderCreatedEvent'
+    subscribe:
+      summary: Consumido por api-go (inventario/facturación) y api-fastapi (puntos/notificaciones)
+      message:
+        $ref: '#/components/messages/OrderCreatedEvent'
+
+  facturacion.facturas.generada:
+    description: Evento emitido por api-go tras reservar stock en almacén y calcular impuestos.
+    publish:
+      summary: Publicado por api-go
+      message:
+        $ref: '#/components/messages/InvoiceGeneratedEvent'
+    subscribe:
+      summary: Consumido por api-fastapi para empuje en tiempo real a WebSockets
+      message:
+        $ref: '#/components/messages/InvoiceGeneratedEvent'
+
+components:
+  messages:
+    OrderCreatedEvent:
+      name: OrderCreatedEvent
+      title: Evento de Pedido Creado (CloudEvents 1.0)
+      summary: Evento inmutable que certifica la persistencia de una compra en el sistema Legacy.
+      payload:
+        type: object
+        required:
+          - specversion
+          - id
+          - source
+          - type
+          - time
+          - data
+        properties:
+          specversion:
+            type: string
+            enum: ['1.0']
+            example: '1.0'
+          id:
+            type: string
+            format: uuid
+            example: 'c4b8e920-7f24-49c1-8411-9e2c608cb174'
+          source:
+            type: string
+            example: '/sistema-legacy/pedidos'
+          type:
+            type: string
+            example: 'legacy.pedidos.creado'
+          datacontenttype:
+            type: string
+            example: 'application/json'
+          time:
+            type: string
+            format: date-time
+            example: '2026-09-12T10:30:00Z'
+          correlationid:
+            type: string
+            example: '8f3a5e12-32b1-4c10-8b1e-0123456789ab'
+          data:
+            type: object
+            required:
+              - pedido_id
+              - cliente_id
+              - total
+              - items
+            properties:
+              pedido_id:
+                type: string
+                example: 'ORD-1042'
+              cliente_id:
+                type: string
+                example: 'cli-99'
+              total:
+                type: number
+                format: float
+                example: 299.98
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    sku:
+                      type: string
+                      example: 'PROD-A'
+                    cantidad:
+                      type: integer
+                      example: 2
+                    precio:
+                      type: number
+                      example: 149.99
+
+    InvoiceGeneratedEvent:
+      name: InvoiceGeneratedEvent
+      title: Evento de Factura Fiscal Generada (CloudEvents 1.0)
+      summary: Notifica que el inventario fue reservado y la factura fiscal fue emitida.
+      payload:
+        type: object
+        required:
+          - specversion
+          - id
+          - source
+          - type
+          - time
+          - data
+        properties:
+          specversion:
+            type: string
+            enum: ['1.0']
+          id:
+            type: string
+            format: uuid
+          source:
+            type: string
+            example: '/sistema-facturacion/facturas'
+          type:
+            type: string
+            example: 'facturacion.facturas.generada'
+          datacontenttype:
+            type: string
+            example: 'application/json'
+          time:
+            type: string
+            format: date-time
+          correlationid:
+            type: string
+          data:
+            type: object
+            required:
+              - factura_id
+              - pedido_id
+              - cliente_id
+              - subtotal
+              - impuesto
+              - total
+              - almacen_asignado
+              - estado
+            properties:
+              factura_id:
+                type: string
+                example: 'INV-74E9360C'
+              pedido_id:
+                type: string
+                example: 'ORD-1042'
+              cliente_id:
+                type: string
+                example: 'cli-99'
+              subtotal:
+                type: number
+                example: 299.98
+              impuesto:
+                type: number
+                example: 57.00
+              total:
+                type: number
+                example: 356.98
+              almacen_asignado:
+                type: string
+                example: 'WH-NORTH-01'
+              estado:
+                type: string
+                example: 'EMITIDA'
