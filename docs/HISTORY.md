@@ -93,3 +93,7 @@ Este archivo registra de forma secuencial los cambios, decisiones y avances real
      - **Sección en README.md:** Creación de `## 🌐 Infraestructura y Redes en un Vistazo` al final del documento con diagrama interactivo en Mermaid (`flowchart TB`).
      - **Topología Completa:** Detalla la relación entre la máquina anfitriona (puertos expuestos: 8000, 5173, 5672, 15672), la red puente privada de Docker (`eda-network`), los contenedores con sus usuarios no-root (`appuser`), puertos y DNS interno.
      - **Matrices de Referencia:** Tabla comparativa de los 6 contenedores (imágenes, targets multi-stage, usuarios, puertos y roles) y matriz de topología AMQP (exchanges, colas, DLX, durabilidad y bindings).
+ 18. **Corrección de Renderizado y Scroll en Tarjeta de Fidelidad (`LoyaltyCard.vue`):**
+     - **Resolución de Corte de Filas (Clipping):** Se eliminó la altura rígida `h-100` que forzaba el colapso vertical en la columna central y se amplió el contenedor de historial a `max-height: 180px` con padding lateral y altura mínima por fila (`min-height: 42px`), eliminando el corte horizontal de elementos.
+     - **Corrección de Puntos Nulos (`+ pts`):** Se corrigió la propiedad de acceso a `puntos_obtenidos ?? puntos_ganados ?? 0`, asegurando que las cifras (+24 pts, +29 pts, etc.) se rendericen siempre visibles.
+     - **Timestamp y Tipografía:** Inclusión de marcas de tiempo formateadas en `JetBrains Mono` y comprobación visual al 100% mediante navegador headless.

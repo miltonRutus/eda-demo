@@ -60,10 +60,24 @@ const tierBorder = computed(() => {
       return 'rgba(99, 102, 241, 0.4)';
   }
 });
+
+function getPoints(item) {
+  return item.puntos_obtenidos ?? item.puntos_ganados ?? 0;
+}
+
+function formatTime(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 </script>
 
 <template>
-  <v-card class="pa-5 md3-card-expressive h-100 d-flex flex-column" elevation="0">
+  <v-card class="pa-5 md3-card-expressive d-flex flex-column" elevation="0">
     <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-3">
       <div class="d-flex align-center">
@@ -101,9 +115,9 @@ const tierBorder = computed(() => {
       Cliente: <span class="mono-font font-weight-bold text-white">{{ clientId }}</span>
     </div>
 
-    <!-- Dynamic Tier Hero Banner -->
+    <!-- Dynamic Tier Hero Banner (Compact & Balanced) -->
     <div
-      class="pa-4 rounded-2xl mb-4 transition-swing"
+      class="pa-3 px-4 rounded-2xl mb-3 transition-swing"
       :style="{
         background: tierGradient,
         border: `1px solid ${tierBorder}`,
@@ -113,16 +127,16 @@ const tierBorder = computed(() => {
       <div class="d-flex justify-space-between align-center">
         <div>
           <div class="text-caption text-grey-lighten-2 font-weight-medium">Puntos Acumulados</div>
-          <div class="text-h3 font-weight-black text-white mono-font my-1">
+          <div class="text-h4 font-weight-black text-white mono-font my-1">
             {{ totalPoints }}
           </div>
-          <div class="text-caption text-grey-lighten-2">
+          <div class="text-caption text-grey-lighten-2" style="font-size: 11px;">
             Equivalente a ${{ (totalPoints * 0.1).toFixed(2) }} en descuentos
           </div>
         </div>
 
-        <v-avatar size="56" color="surface" variant="flat" style="border: 2px solid rgba(255, 255, 255, 0.15);">
-          <v-icon size="32" :color="tierBadgeColor">
+        <v-avatar size="50" color="surface" variant="flat" style="border: 2px solid rgba(255, 255, 255, 0.15);">
+          <v-icon size="28" :color="tierBadgeColor">
             {{ tier === 'Gold' ? 'mdi-trophy-variant' : tier === 'Silver' ? 'mdi-shield-star' : 'mdi-medal' }}
           </v-icon>
         </v-avatar>
@@ -130,7 +144,7 @@ const tierBorder = computed(() => {
     </div>
 
     <!-- Tier Milestones Progress -->
-    <div class="mb-4">
+    <div class="mb-3">
       <div class="d-flex justify-space-between text-caption mb-1">
         <span class="font-weight-bold text-white">Progreso a Nivel {{ nextTierTarget.nextTier }}</span>
         <span class="font-weight-bold mono-font text-accent">{{ totalPoints }} / {{ nextTierTarget.target }} pts</span>
@@ -138,7 +152,7 @@ const tierBorder = computed(() => {
       <v-progress-linear
         :model-value="nextTierTarget.progress"
         color="accent"
-        height="10"
+        height="8"
         rounded="pill"
         style="box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);"
       ></v-progress-linear>
@@ -151,7 +165,7 @@ const tierBorder = computed(() => {
       </div>
 
       <!-- Tier Ladder Badges -->
-      <div class="d-flex justify-space-between align-center mt-3 pt-2 border-t-grey-darken-4">
+      <div class="d-flex justify-space-between align-center mt-2 pt-2 border-t-grey-darken-4">
         <v-chip size="x-small" :color="tier === 'Standard' ? 'primary' : 'surface-variant'" variant="tonal">
           Standard (0+)
         </v-chip>
@@ -166,8 +180,8 @@ const tierBorder = computed(() => {
       </div>
     </div>
 
-    <!-- Recent History -->
-    <div class="mt-auto">
+    <!-- Recent History (Fix: Full item display & no sliced rows) -->
+    <div class="mt-2">
       <div class="d-flex justify-space-between align-center mb-2">
         <span class="text-caption text-grey font-weight-bold text-uppercase" style="letter-spacing: 0.05em;">
           Acreditaciones Recientes
@@ -178,19 +192,28 @@ const tierBorder = computed(() => {
       <div v-if="history.length === 0" class="pa-3 text-center rounded-xl bg-surface-variant text-caption text-grey font-italic">
         No hay registros previos. Realiza una compra para acumular puntos.
       </div>
-      <div v-else class="d-flex flex-column ga-1" style="max-height: 120px; overflow-y: auto;">
+      <div
+        v-else
+        class="d-flex flex-column ga-2"
+        style="max-height: 180px; overflow-y: auto; padding-right: 4px;"
+      >
         <div
-          v-for="(item, idx) in history.slice(0, 3)"
-          :key="idx"
-          class="pa-2 px-3 rounded-xl md3-item-interactive d-flex justify-space-between align-center text-caption"
-          style="background: rgba(20, 29, 51, 0.5);"
+          v-for="(item, idx) in history"
+          :key="item.pedido_id || idx"
+          class="pa-2 px-3 rounded-xl md3-item-interactive d-flex justify-space-between align-center event-card-enter"
+          style="background: rgba(20, 29, 51, 0.6); min-height: 42px;"
         >
           <div class="d-flex align-center">
             <v-icon size="16" color="accent" class="mr-2">mdi-plus-circle-outline</v-icon>
-            <span class="mono-font text-white">{{ item.pedido_id }}</span>
+            <div>
+              <span class="mono-font text-white font-weight-bold text-body-2">{{ item.pedido_id }}</span>
+              <span v-if="item.fecha" class="text-caption text-grey ml-2 mono-font" style="font-size: 11px;">
+                {{ formatTime(item.fecha) }}
+              </span>
+            </div>
           </div>
           <v-chip size="x-small" color="accent" variant="flat" class="font-weight-bold">
-            +{{ item.puntos_ganados }} pts
+            +{{ getPoints(item) }} pts
           </v-chip>
         </div>
       </div>

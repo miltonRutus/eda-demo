@@ -12,7 +12,7 @@ defineProps({
 </script>
 
 <template>
-  <v-card class="pa-5 md3-card-expressive h-100 d-flex flex-column" elevation="0">
+  <v-card class="pa-5 md3-card-expressive d-flex flex-column" elevation="0">
     <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-3">
       <div class="d-flex align-center">
